@@ -3,7 +3,7 @@
 /**
  * HUDU MCP Server
  *
- * Copyright (c) 2024 HUDU MCP Server Contributors
+ * Copyright (c) 2025 HUDU MCP Server Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,7 @@ class HuduMcpServer {
   constructor() {
     this.server = new Server(
       {
-        name: 'hudu-mcp-server',
+        name: 'hudu-mcp',
         version: '1.0.0',
       },
       {
@@ -59,7 +59,7 @@ class HuduMcpServer {
 
     // Initialize HUDU client
     this.config = this.loadConfig();
-    this.huduClient = new HuduClient(this.config.HUDU_BASE_URL, this.config.HUDU_API_KEY);
+    this.huduClient = new HuduClient(this.config.HUDU_API_KEY, this.config.HUDU_BASE_URL);
 
     this.setupHandlers();
   }
@@ -218,7 +218,34 @@ class HuduMcpServer {
     registerTools(this.server, this.huduClient);
   }
 
+  private async validateApiConnection(): Promise<void> {
+    try {
+      console.error('Validating HUDU API connection...');
+      const apiInfo = await this.huduClient.getApiInfo();
+      console.error(`✓ Connected to HUDU API successfully`);
+      console.error(`  API Version: ${apiInfo.version || 'Unknown'}`);
+      console.error(`  Base URL: ${this.config.HUDU_BASE_URL}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          throw new Error(`API key validation failed: Invalid or expired API key. Please check your HUDU_API_KEY.`);
+        }
+        if (error.message.includes('404') || error.message.includes('ENOTFOUND')) {
+          throw new Error(`URL validation failed: Cannot connect to ${this.config.HUDU_BASE_URL}. Please check your HUDU_BASE_URL.`);
+        }
+        if (error.message.includes('403')) {
+          throw new Error(`API access denied: Your API key does not have sufficient permissions.`);
+        }
+        throw new Error(`API connection failed: ${error.message}`);
+      }
+      throw new Error(`API connection failed: Unknown error`);
+    }
+  }
+
   async run(): Promise<void> {
+    // Validate API connection before starting the server
+    await this.validateApiConnection();
+    
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error('HUDU MCP server running on stdio');

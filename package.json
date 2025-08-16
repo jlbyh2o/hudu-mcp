@@ -1,5 +1,5 @@
 {
-  "name": "hudu-mcp-server",
+  "name": "hudu-mcp",
   "version": "1.0.0",
   "description": "MCP server for HUDU technical documentation integration",
   "main": "dist/index.js",
@@ -27,12 +27,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/hudu-mcp-server.git"
+    "url": "https://github.com/jlbyh2o/hudu-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/hudu-mcp-server/issues"
+    "url": "https://github.com/jlbyh2o/hudu-mcp/issues"
   },
-  "homepage": "https://github.com/your-username/hudu-mcp-server#readme",
+  "homepage": "https://github.com/jlbyh2o/hudu-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0",
     "axios": "^1.6.0",

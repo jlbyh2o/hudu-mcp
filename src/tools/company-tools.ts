@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 HUDU MCP Server Contributors
+ * Copyright (c) 2025 HUDU MCP Server Contributors
  * SPDX-License-Identifier: MIT
  */
 

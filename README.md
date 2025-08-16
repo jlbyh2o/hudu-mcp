@@ -19,32 +19,44 @@ A Model Context Protocol (MCP) server that integrates with HUDU for technical do
 
 ## Installation
 
-1. Clone or download this repository:
+### From NPM (Recommended)
+
 ```bash
-git clone <repository-url>
+npm install -g hudu-mcp
+```
+
+### From Source
+
+```bash
+git clone https://github.com/jlbyh2o/hudu-mcp.git
 cd hudu-mcp
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Create environment configuration:
-```bash
-cp src/.env.example .env
-```
-
-4. Edit the `.env` file with your HUDU credentials:
-```env
-HUDU_API_KEY=your_hudu_api_key_here
-HUDU_BASE_URL=https://your-hudu-instance.huducloud.com
-```
-
-5. Build the project:
-```bash
 npm run build
 ```
+
+## Configuration
+
+The server requires two environment variables:
+
+- `HUDU_API_KEY`: Your HUDU API key (found in HUDU under Admin > API Keys)
+- `HUDU_BASE_URL`: Your HUDU instance base URL (domain only, do not include `/api/v1`)
+
+### Setting up Environment Variables
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit the `.env` file with your actual values:
+   ```bash
+   HUDU_API_KEY=your_actual_api_key_here
+   HUDU_BASE_URL=https://your-company.huducloud.com
+   ```
+
+**Important:** The `HUDU_BASE_URL` should only contain your domain (e.g., `https://your-company.huducloud.com`). Do NOT include `/api/v1` in the URL as this is automatically appended by the client.
+
+3. Make sure your `.env` file is not committed to version control (it's already in `.gitignore`)
 
 ## Usage
 
@@ -59,6 +71,21 @@ npm run dev
 ```bash
 npm start
 ```
+
+### Startup Validation
+
+The MCP server automatically validates your API connection during startup by calling the `/api_info` endpoint. This ensures:
+
+- Your `HUDU_API_KEY` is valid and active
+- Your `HUDU_BASE_URL` is correct and accessible
+- Your API key has the necessary permissions
+
+If validation fails, you'll see a clear error message indicating the issue:
+- **401 errors**: Invalid or expired API key
+- **403 errors**: API key lacks sufficient permissions
+- **404/connection errors**: Incorrect base URL or network issues
+
+This validation helps catch configuration issues early, before you start using the MCP tools.
 
 ### Available Tools
 
@@ -212,6 +239,45 @@ Enable debug logging by setting the environment variable:
 DEBUG=hudu-mcp:*
 ```
 
+## Troubleshooting
+
+### Common Issues
+
+**"Invalid URL" Error**
+- Ensure your `HUDU_BASE_URL` contains only the domain (e.g., `https://your-company.huducloud.com`)
+- Do NOT include `/api/v1` in the base URL - this is automatically appended
+- Make sure the URL starts with `https://` or `http://`
+
+**"Configuration validation failed" Error**
+- Check that both `HUDU_API_KEY` and `HUDU_BASE_URL` are set in your `.env` file
+- Verify there are no extra spaces or quotes around the values
+- Ensure the `.env` file is in the correct directory (project root)
+
+**"403 Forbidden" or Authentication Errors**
+- Verify your API key is correct and active in HUDU (Admin > API Keys)
+- Check that your API key has the necessary permissions
+- Ensure your HUDU instance URL is correct
+
+**"401 Unauthorized" for Password Access**
+- This occurs when your API key doesn't have permission to access password data
+- HUDU allows administrators to restrict password access per API key for security
+- The MCP server now handles this gracefully with an informative message
+- Contact your HUDU administrator to enable password access if needed
+- You can still use other asset management tools that don't require password permissions
+
+**"page_size must be less than or equal to 100" Error**
+- The HUDU API limits page_size to a maximum of 100 results per request
+- Use pagination with multiple requests for larger datasets
+
+### Testing Your Configuration
+
+To test if your configuration is working:
+
+1. Set up your `.env` file with correct values
+2. Run the server: `npm start`
+3. If using with Claude Desktop, check the MCP server logs
+4. Try a simple query like getting companies with a small page_size (e.g., 10)
+
 ## Contributing
 
 We welcome contributions to the HUDU MCP Server! Here's how you can help:
@@ -219,11 +285,12 @@ We welcome contributions to the HUDU MCP Server! Here's how you can help:
 ### Getting Started
 
 1. Fork the repository on GitHub
-2. Clone your fork locally:
-   ```bash
-   git clone https://github.com/your-username/hudu-mcp-server.git
-   cd hudu-mcp-server
-   ```
+2. Clone your fork:
+
+```bash
+git clone https://github.com/your-username/hudu-mcp.git
+cd hudu-mcp
+```
 3. Install dependencies:
    ```bash
    npm install

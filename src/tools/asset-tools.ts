@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 HUDU MCP Server Contributors
+ * Copyright (c) 2025 HUDU MCP Server Contributors
  * SPDX-License-Identifier: MIT
  */
 
@@ -56,37 +56,62 @@ export async function handleAssetTools(request: any, huduClient: HuduClient): Pr
 
       case 'get_asset_passwords': {
         const params = GetAssetPasswordsSchema.parse(args);
-        const result = await huduClient.getAssetPasswords({
-          company_id: params.company_id,
-          name: params.name,
-          page: params.page,
-          page_size: params.page_size,
-        });
+        
+        try {
+          const result = await huduClient.getAssetPasswords({
+            company_id: params.company_id,
+            name: params.name,
+            page: params.page,
+            page_size: params.page_size,
+          });
 
-        // Mask passwords in the response for security
-        const maskedPasswords = result.data.map((password) => ({
-          ...password,
-          password: '***MASKED***',
-          otp_secret: password.otp_secret ? '***MASKED***' : undefined,
-        }));
+          // Mask passwords in the response for security
+          const maskedPasswords = result.data.map((password) => ({
+            ...password,
+            password: '***MASKED***',
+            otp_secret: password.otp_secret ? '***MASKED***' : undefined,
+          }));
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    asset_passwords: maskedPasswords,
+                    pagination: result.meta,
+                    summary: `Found ${result.data.length} password assets${params.company_id ? ` for company ID ${params.company_id}` : ''}${params.name ? ` matching "${params.name}"` : ''}`,
+                    note: 'Passwords are masked for security. Use get_asset_password_details for full access.',
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('HUDU API Error (401)')) {
+            return {
+              content: [
                 {
-                  asset_passwords: maskedPasswords,
-                  pagination: result.meta,
-                  summary: `Found ${result.data.length} password assets${params.company_id ? ` for company ID ${params.company_id}` : ''}${params.name ? ` matching "${params.name}"` : ''}`,
-                  note: 'Passwords are masked for security. Use get_asset_password_details for full access.',
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      error: 'Access Denied',
+                      message: 'Your API key does not have permission to access password data. This is a security feature in Hudu that can be configured per API key.',
+                      suggestion: 'Contact your Hudu administrator to enable password access for your API key, or use other asset management tools that don\'t require password permissions.',
+                      asset_passwords: [],
+                      pagination: { current_page: 1, per_page: 0, total_pages: 0, total_count: 0 }
+                    },
+                    null,
+                    2
+                  ),
                 },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+              ],
+            };
+          }
+          throw error;
+        }
       }
 
       default:

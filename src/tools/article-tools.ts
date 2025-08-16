@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 HUDU MCP Server Contributors
+ * Copyright (c) 2025 HUDU MCP Server Contributors
  * SPDX-License-Identifier: MIT
  */
 
@@ -43,9 +43,9 @@ export async function handleArticleTools(request: any, huduClient: HuduClient): 
           created_at: article.created_at,
           updated_at: article.updated_at,
           content_preview:
-            article.content.length > 200
+            article.content && article.content.length > 200
               ? `${article.content.substring(0, 200)}...`
-              : article.content,
+              : article.content || 'No content available',
         }));
 
         return {
