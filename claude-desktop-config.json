@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "hudu": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "HUDU_API_KEY": "your_hudu_api_key_here",
+        "HUDU_BASE_URL": "https://your-hudu-instance.huducloud.com"
+      }
+    }
+  }
+}
