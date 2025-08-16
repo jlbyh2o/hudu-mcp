@@ -4,9 +4,17 @@ A Model Context Protocol (MCP) server that integrates with HUDU for technical do
 
 ## Features
 
-- **Company/Customer Management**: Retrieve company information and details
-- **Knowledge Base Access**: Search and retrieve technical documentation articles
-- **Asset Management**: Access asset information and password management
+- **Company/Customer Management**: Retrieve company information with advanced filtering
+- **Knowledge Base Access**: Search and retrieve technical documentation articles with enhanced filters
+- **Asset Management**: Access asset information with comprehensive search capabilities
+- **User Management**: Retrieve user information and details
+- **Network Management**: Access network configurations and details
+- **Procedure Management**: Retrieve documented procedures and workflows
+- **Activity Logging**: Access detailed activity logs with filtering
+- **Asset Layouts**: Retrieve asset layout definitions and schemas
+- **Folder Management**: Access organizational folder structures
+- **Password Management**: Secure access to credential information
+- **Advanced Search**: Enhanced filtering across all resource types
 - **Secure Authentication**: API key-based authentication with HUDU
 - **Type Safety**: Built with TypeScript and Zod validation
 - **Error Handling**: Comprehensive error handling and logging
@@ -84,8 +92,35 @@ If validation fails, you'll see a clear error message indicating the issue:
 - **401 errors**: Invalid or expired API key
 - **403 errors**: API key lacks sufficient permissions
 - **404/connection errors**: Incorrect base URL or network issues
+- **Token limit exceeded**: Large responses may be truncated automatically (see Response Size Management below)
 
 This validation helps catch configuration issues early, before you start using the MCP tools.
+
+## Response Size Management
+
+The MCP server automatically handles large responses to prevent token limit issues:
+
+- **Automatic Truncation**: Responses larger than ~3MB are automatically truncated
+- **Truncation Indicators**: Truncated responses include `_truncation_info` with details
+- **Pagination Recommended**: Use `page` and `page_size` parameters to get smaller chunks
+- **Array Limits**: Large arrays are truncated with information about remaining items
+- **Text Field Limits**: Long text fields (>10KB) are truncated with "[truncated]" indicator
+
+### Best Practices for Large Datasets
+
+1. **Use Pagination**: Always use `page_size` parameter (max 100) to limit results
+2. **Filter Results**: Use search and filter parameters to narrow down results
+3. **Incremental Queries**: For large datasets, make multiple smaller queries
+4. **Monitor Truncation**: Check for `_truncation_info` in responses to detect truncated data
+
+Example of paginated query:
+```json
+{
+  "page": 1,
+  "page_size": 25,
+  "search": "specific term"
+}
+```
 
 ### Available Tools
 
@@ -93,9 +128,18 @@ The MCP server provides the following tools for LLM interaction:
 
 #### Company/Customer Tools
 
-**`get_companies`** - Retrieve a list of companies/customers
+**`get_companies`** - Retrieve a list of companies/customers with advanced filtering
 - Parameters:
   - `name` (optional): Filter companies by name
+  - `phone_number` (optional): Filter companies by phone number
+  - `website` (optional): Filter companies by website
+  - `city` (optional): Filter companies by city
+  - `id_number` (optional): Filter companies by ID number
+  - `state` (optional): Filter companies by state
+  - `slug` (optional): Filter companies by URL slug
+  - `search` (optional): Filter companies using a search query
+  - `id_in_integration` (optional): Filter companies by ID/identifier in PSA/RMM/outside integration
+  - `updated_at` (optional): Filter companies updated within a range or at an exact time
   - `page` (optional): Page number for pagination
   - `page_size` (optional): Number of results per page
 
@@ -105,10 +149,15 @@ The MCP server provides the following tools for LLM interaction:
 
 #### Knowledge Base Tools
 
-**`search_articles`** - Search knowledge base articles
+**`search_articles`** - Search knowledge base articles with enhanced filtering
 - Parameters:
   - `search` (optional): Search query for articles
   - `company_id` (optional): Filter articles by company ID
+  - `name` (optional): Filter articles by name
+  - `slug` (optional): Filter articles by URL slug
+  - `draft` (optional): Set to true to display only draft articles
+  - `enable_sharing` (optional): Filter articles by sharing status
+  - `updated_at` (optional): Filter articles updated within a range or at an exact time
   - `page` (optional): Page number for pagination
   - `page_size` (optional): Number of results per page
 
@@ -118,10 +167,17 @@ The MCP server provides the following tools for LLM interaction:
 
 #### Asset Management Tools
 
-**`get_assets`** - Retrieve assets for a company
+**`get_assets`** - Retrieve assets with advanced filtering options
 - Parameters:
   - `company_id` (optional): Company ID to filter assets
   - `asset_layout_id` (optional): Filter by asset layout ID
+  - `id` (optional): Filter assets by their ID
+  - `name` (optional): Filter assets by their name
+  - `primary_serial` (optional): Filter assets by their primary serial number
+  - `archived` (optional): Set to true to display only archived assets
+  - `slug` (optional): Filter assets by their URL slug
+  - `search` (optional): Filter assets using a search query
+  - `updated_at` (optional): Filter assets updated within a range or at an exact time
   - `page` (optional): Page number for pagination
   - `page_size` (optional): Number of results per page
 
@@ -132,7 +188,79 @@ The MCP server provides the following tools for LLM interaction:
   - `page` (optional): Page number for pagination
   - `page_size` (optional): Number of results per page
 
+**`get_asset_layouts`** - Retrieve asset layout definitions
+- Parameters:
+  - `name` (optional): Filter layouts by name
+  - `page` (optional): Page number for pagination
+  - `page_size` (optional): Number of results per page
+
+**`get_asset_layout`** - Get detailed information about a specific asset layout
+- Parameters:
+  - `id` (required): Asset layout ID
+
 *Note: Passwords are masked in list responses for security. Individual password retrieval would require additional implementation.*
+
+#### User Management Tools
+
+**`get_users`** - Retrieve a list of users
+- Parameters:
+  - `search` (optional): Filter users using a search query
+  - `page` (optional): Page number for pagination
+  - `page_size` (optional): Number of results per page
+
+**`get_user`** - Get detailed information about a specific user
+- Parameters:
+  - `id` (required): User ID
+
+#### Network Management Tools
+
+**`get_networks`** - Retrieve a list of networks
+- Parameters:
+  - `search` (optional): Filter networks using a search query
+  - `page` (optional): Page number for pagination
+  - `page_size` (optional): Number of results per page
+
+**`get_network`** - Get detailed information about a specific network
+- Parameters:
+  - `id` (required): Network ID
+
+#### Procedure Management Tools
+
+**`get_procedures`** - Retrieve a list of procedures
+- Parameters:
+  - `search` (optional): Filter procedures using a search query
+  - `page` (optional): Page number for pagination
+  - `page_size` (optional): Number of results per page
+
+**`get_procedure`** - Get detailed information about a specific procedure
+- Parameters:
+  - `id` (required): Procedure ID
+
+#### Activity Logging Tools
+
+**`get_activity_logs`** - Retrieve activity logs with advanced filtering
+- Parameters:
+  - `user_id` (optional): Filter logs by user ID
+  - `user_email` (optional): Filter logs by user email
+  - `resource_id` (optional): Filter logs by resource ID
+  - `resource_type` (optional): Filter logs by resource type
+  - `action_message` (optional): Filter logs by action message
+  - `start_date` (optional): Filter logs from a specific start date
+  - `search` (optional): Filter logs using a search query
+  - `page` (optional): Page number for pagination
+  - `page_size` (optional): Number of results per page
+
+#### Folder Management Tools
+
+**`get_folders`** - Retrieve a list of folders
+- Parameters:
+  - `search` (optional): Filter folders using a search query
+  - `page` (optional): Page number for pagination
+  - `page_size` (optional): Number of results per page
+
+**`get_folder`** - Get detailed information about a specific folder
+- Parameters:
+  - `id` (required): Folder ID
 
 ### Example Usage with Claude Desktop
 
@@ -155,10 +283,34 @@ The MCP server provides the following tools for LLM interaction:
 2. Restart Claude Desktop
 
 3. You can now ask Claude to:
-   - "Show me all companies in HUDU"
-   - "Find articles about network configuration for company ID 123"
-   - "Get details for company 'Acme Corp'"
-   - "List all assets for company ID 456"
+
+**Company Management:**
+- "Show me all companies in our HUDU instance"
+- "Find companies in New York with phone numbers containing '555'"
+- "Search for companies with website containing 'tech.com'"
+- "Get company details for Acme Corp"
+
+**Knowledge Base:**
+- "Search for articles about 'network configuration'"
+- "Find draft articles updated in the last week"
+- "Show me shared articles for company ID 123"
+- "Get the article with ID 456"
+
+**Asset Management:**
+- "Show me all assets for company ID 789"
+- "Find assets with serial number containing 'ABC123'"
+- "Search for archived network equipment assets"
+- "Get asset layout definitions for servers"
+
+**User & Activity Management:**
+- "Show me all active users in the system"
+- "Find activity logs for user john@company.com from last month"
+- "Search for login activities in the past week"
+
+**Network & Procedures:**
+- "List all documented network configurations"
+- "Find procedures related to backup processes"
+- "Show me folder structure for IT documentation"
 
 ## API Integration
 

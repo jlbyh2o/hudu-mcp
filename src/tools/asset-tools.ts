@@ -6,11 +6,19 @@
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import type { HuduClient } from '../hudu-client.js';
+import { createMcpResponse } from '../utils/response-utils.js';
 
 // Input schemas for asset tools
 const GetAssetsSchema = z.object({
   company_id: z.number().min(1).optional(),
   asset_layout_id: z.number().min(1).optional(),
+  id: z.number().min(1).optional(),
+  name: z.string().optional(),
+  primary_serial: z.string().optional(),
+  archived: z.boolean().optional(),
+  slug: z.string().optional(),
+  search: z.string().optional(),
+  updated_at: z.string().optional(),
   page: z.number().min(1).optional(),
   page_size: z.number().min(1).max(100).optional(),
 });
@@ -20,6 +28,15 @@ const GetAssetPasswordsSchema = z.object({
   name: z.string().optional(),
   page: z.number().min(1).optional(),
   page_size: z.number().min(1).max(100).optional(),
+});
+
+const GetAssetLayoutsSchema = z.object({
+  page: z.number().min(1).optional(),
+  page_size: z.number().min(1).max(100).optional(),
+});
+
+const GetAssetLayoutSchema = z.object({
+  id: z.number().min(1),
 });
 
 export async function handleAssetTools(request: any, huduClient: HuduClient): Promise<any> {
@@ -32,26 +49,25 @@ export async function handleAssetTools(request: any, huduClient: HuduClient): Pr
         const result = await huduClient.getAssets({
           company_id: params.company_id,
           asset_layout_id: params.asset_layout_id,
+          id: params.id,
+          name: params.name,
+          primary_serial: params.primary_serial,
+          archived: params.archived,
+          slug: params.slug,
+          search: params.search,
+          updated_at: params.updated_at,
           page: params.page,
           page_size: params.page_size,
         });
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  assets: result.data,
-                  pagination: result.meta,
-                  summary: `Found ${result.data.length} assets${params.company_id ? ` for company ID ${params.company_id}` : ''}${params.asset_layout_id ? ` with layout ID ${params.asset_layout_id}` : ''}`,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return createMcpResponse(
+          {
+            assets: result.data,
+            pagination: result.meta,
+            summary: `Found ${result.data.length} assets${params.company_id ? ` for company ID ${params.company_id}` : ''}${params.asset_layout_id ? ` with layout ID ${params.asset_layout_id}` : ''}`,
+          },
+          `Found ${result.data.length} assets${params.company_id ? ` for company ID ${params.company_id}` : ''}${params.asset_layout_id ? ` with layout ID ${params.asset_layout_id}` : ''}`
+        );
       }
 
       case 'get_asset_passwords': {
@@ -112,6 +128,49 @@ export async function handleAssetTools(request: any, huduClient: HuduClient): Pr
           }
           throw error;
         }
+      }
+
+      case 'get_asset_layouts': {
+        const params = GetAssetLayoutsSchema.parse(args);
+        const result = await huduClient.getAssetLayouts(params);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  asset_layouts: result.data,
+                  pagination: result.meta,
+                  summary: `Found ${result.data.length} asset layouts`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case 'get_asset_layout': {
+        const params = GetAssetLayoutSchema.parse(args);
+        const layout = await huduClient.getAssetLayout(params.id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  asset_layout: layout,
+                  summary: `Asset layout details for: ${layout.name}`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
       }
 
       default:
